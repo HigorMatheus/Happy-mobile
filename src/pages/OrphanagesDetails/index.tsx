@@ -16,6 +16,7 @@ interface OrphanageParamsDetails {
 interface Orphanage{
   id:number
   name: string
+  whatsapp: string
   latitude:number
   longitude:number
   about: string
@@ -50,6 +51,11 @@ const OrphanageDetails: React.FC = () => {
   }
   function hanbleOpenGoogleMapsRouter(){
     Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${orphanage?.latitude},${orphanage?.longitude}`)
+  }
+
+  function handleContactInWhatsapp(whatsapp:string){
+    
+    Linking.openURL(`whatsapp://send?text=Vim atravez do app proffy!&phone=+${whatsapp}`)
   }
   return (
     <ScrollView style={styles.container}>
@@ -121,11 +127,11 @@ const OrphanageDetails: React.FC = () => {
             </View>
           )}
         </View>
-{/* 
-        <RectButton style={styles.contactButton} onPress={() => {}}>
+
+        <RectButton style={styles.contactButton} onPress={() => handleContactInWhatsapp(orphanage.whatsapp)}>
           <FontAwesome name="whatsapp" size={24} color="#FFF" />
           <Text style={styles.contactButtonText}>Entrar em contato</Text>
-        </RectButton> */}
+        </RectButton>
       </View>
     </ScrollView>
   )

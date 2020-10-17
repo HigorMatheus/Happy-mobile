@@ -1,9 +1,10 @@
-import React, { useState} from 'react';
-import {  View,Text } from 'react-native';
+import React, { useEffect, useState} from 'react';
+import {  View,Text, Alert } from 'react-native';
 import MapView, {Marker,Callout,PROVIDER_GOOGLE} from 'react-native-maps';
 import {Feather} from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RectButton } from 'react-native-gesture-handler';
+import * as expoLocation from 'expo-location'
 
 import mapMarker from '../../images/map-marker.png';
 import { styles } from './styles';
@@ -20,12 +21,15 @@ interface Orphanage{
 const OrphanegesMap: React.FC = () => {
   const navigation = useNavigation();
   const [orphanages, setOrphanages]= useState<Orphanage[]>([]);
+  const [inicitalPosition, setInicitalPosition]= useState({latitude: 0, longitude:0})
 
   useFocusEffect(()=>{
     api.get('/orphanages').then(response=>{
       setOrphanages(response.data);
     })
   })
+
+ 
 
   function handlerNavigationOrphanagesDetails(id:number){
     navigation.navigate('OrphanagesDetails',{id})
@@ -34,16 +38,36 @@ const OrphanegesMap: React.FC = () => {
   function handlerNavigationToCreateOrphanage(){
     navigation.navigate('SelectMapPosition')
   }
+  useEffect(()=>{
+    async function loadPositions() {
+      const {status} = await expoLocation.requestPermissionsAsync();
+
+      if(status!== 'granted'){
+        Alert.alert('Ooops..','Precissamos de sua Localização.....');
+        return;
+      }
+
+      const location = await expoLocation.getCurrentPositionAsync();
+
+      const {latitude,longitude} =location.coords;
+
+
+      setInicitalPosition({ latitude, longitude})
+    }
+
+    loadPositions()
+  },[])
 
   return (
     <View style={styles.container}>
 
-      <MapView 
+      { inicitalPosition.latitude !== 0 && (
+        <MapView 
         provider={PROVIDER_GOOGLE}
         style={styles.map}
         initialRegion={{
-          latitude:-23.6183758,
-          longitude:-46.6995227,
+          latitude:inicitalPosition.latitude,
+          longitude:inicitalPosition.longitude,
           latitudeDelta:0.008,
           longitudeDelta:0.008,
         }}  
@@ -73,6 +97,8 @@ const OrphanegesMap: React.FC = () => {
           )
         })}
       </MapView>
+      )}
+      
       <View style={styles.footer}>
           <Text style={styles.footerText}> {orphanages.length} orfanatos encontrados</Text>
           <RectButton style={styles.crrateOrphanagesBotton} onPress={handlerNavigationToCreateOrphanage}>

@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions, Text } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, Dimensions, Text, Alert } from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
 import { RectButton } from 'react-native-gesture-handler';
 import MapView, { MapEvent, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import * as expoLocation from 'expo-location'
 
 import mapMarkerImg from '../../../images/map-marker.png';
+
+
+import styles from './styles';
 
 const SelectMapPosition: React.FC = () =>{
   const navigation = useNavigation();
   const [position, setPosition]= useState({latitude: 0, longitude:0})
+  const [inicitalPosition, setInicitalPosition]= useState({latitude: 0, longitude:0})
 
   function handleNextStep() {
     navigation.navigate('OrphanageData',{position});
@@ -18,13 +23,35 @@ const SelectMapPosition: React.FC = () =>{
     setPosition(event.nativeEvent.coordinate)
   }
 
+  useEffect(()=>{
+    async function loadPositions() {
+      const {status} = await expoLocation.requestPermissionsAsync();
+
+      if(status!== 'granted'){
+        Alert.alert('Ooops..','Precissamos de sua Localização.....');
+        return;
+      }
+
+      const location = await expoLocation.getCurrentPositionAsync();
+
+      const {latitude,longitude} =location.coords;
+
+
+      setInicitalPosition({ latitude, longitude})
+    }
+
+    loadPositions()
+  },[])
+
   return (
     <View style={styles.container}>
-      <MapView 
+      { inicitalPosition.latitude!== 0 && (
+        <MapView 
+       
         provider={PROVIDER_GOOGLE}
         initialRegion={{
-          latitude: -27.2092052,
-          longitude: -49.6401092,
+          latitude: inicitalPosition.latitude,
+          longitude: inicitalPosition.longitude,
           latitudeDelta: 0.008,
           longitudeDelta: 0.008,
         }}
@@ -38,6 +65,7 @@ const SelectMapPosition: React.FC = () =>{
         />
         )}
       </MapView>
+      )}
 
       {position.latitude!== 0 && (
            <RectButton style={styles.nextButton} onPress={handleNextStep}>
@@ -49,35 +77,5 @@ const SelectMapPosition: React.FC = () =>{
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    position: 'relative'
-  },
-
-  mapStyle: {
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
-  },
-
-  nextButton: {
-    backgroundColor: '#15c3d6',
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: 56,
-
-    position: 'absolute',
-    left: 24,
-    right: 24,
-    bottom: 40,
-  },
-
-  nextButtonText: {
-    fontFamily: 'Nunito_800ExtraBold',
-    fontSize: 16,
-    color: '#FFF',
-  }
-})
 
 export default SelectMapPosition
